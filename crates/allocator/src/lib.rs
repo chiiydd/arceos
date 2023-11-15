@@ -35,6 +35,15 @@ pub use tlsf::TlsfByteAllocator;
 use core::alloc::Layout;
 use core::ptr::NonNull;
 
+
+#[cfg(feature="early")]
+mod early;
+#[cfg(feature="early")]
+pub use early::EarlyAllocator;
+
+
+
+
 /// The error type used for allocation.
 #[derive(Debug)]
 pub enum AllocError {
