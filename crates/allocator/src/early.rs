@@ -96,7 +96,7 @@ impl <const PAGE_SIZE:usize> ByteAllocator for EarlyAllocator<PAGE_SIZE>{
         if  !layout.align().is_power_of_two(){
             return Err(AllocError::InvalidParam);
         }
-        let start=self.byte_pos;
+        let start=(self.byte_pos+layout.align()-1)&(!layout.align()+1);
         let  alloc_pos=(start+layout.size()+layout.align()-1)&(!layout.align()+1);
         
         if alloc_pos>self.page_pos{
