@@ -1,5 +1,5 @@
 use alloc::sync::Arc;
-use core::ops::Deref;
+use core::{ops::Deref, sync::atomic::{AtomicIsize, AtomicUsize, Ordering}};
 
 use linked_list::{Adapter, Links, List};
 
@@ -11,6 +11,7 @@ use crate::BaseScheduler;
 pub struct FifoTask<T> {
     inner: T,
     links: Links<Self>,
+    time_slice:AtomicIsize,
 }
 
 unsafe impl<T> Adapter for FifoTask<T> {
@@ -28,9 +29,18 @@ impl<T> FifoTask<T> {
         Self {
             inner,
             links: Links::new(),
+            time_slice:AtomicIsize::new(32),
         }
     }
 
+    /// return the time slice 
+    pub fn time_slice(&self)->isize{
+            self.time_slice.load(Ordering::Acquire)
+    }
+    /// reset time slice 
+    pub fn reset_time_slice(&self){
+        self.time_slice.store(32, Ordering::Release);
+    }
     /// Returns a reference to the inner task struct.
     pub const fn inner(&self) -> &T {
         &self.inner
@@ -56,6 +66,7 @@ impl<T> Deref for FifoTask<T> {
 /// It internally uses a linked list as the ready queue.
 pub struct FifoScheduler<T> {
     ready_queue: List<Arc<FifoTask<T>>>,
+    
 }
 
 impl<T> FifoScheduler<T> {
@@ -89,11 +100,14 @@ impl<T> BaseScheduler for FifoScheduler<T> {
     }
 
     fn put_prev_task(&mut self, prev: Self::SchedItem, _preempt: bool) {
+        prev.reset_time_slice();
         self.ready_queue.push_back(prev);
     }
 
     fn task_tick(&mut self, _current: &Self::SchedItem) -> bool {
-        false // no reschedule
+        let old=_current.time_slice.fetch_sub(1, Ordering::Release);
+        old<=1
+
     }
 
     fn set_priority(&mut self, _task: &Self::SchedItem, _prio: isize) -> bool {

@@ -10,7 +10,7 @@ repository = "https://github.com/rcore-os/arceos/tree/main/modules/axtask"
 documentation = "https://rcore-os.github.io/arceos/axtask/index.html"
 
 [features]
-default = []
+default = ["preempt"]
 
 multitask = [
     "dep:axconfig", "dep:percpu", "dep:spinlock", "dep:lazy_init", "dep:memory_addr",
