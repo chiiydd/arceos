@@ -1,5 +1,6 @@
 #![cfg_attr(feature = "axstd", no_std)]
 #![cfg_attr(feature = "axstd", no_main)]
+#![feature(asm_const)]
 #[cfg(feature = "axstd")]
 use axstd::println;
 const PLASH_START: usize = 0x22000000;
@@ -24,6 +25,15 @@ fn main() {
    println!("run code {:?}; address [{:?}]", run_code, 
    run_code.as_ptr());
    println!("Load payload ok!");
+
+   println!("Execute app ...");
+   // execute app
+   unsafe { core::arch::asm!("
+       li      t2, {run_start}
+       jalr    t2
+       j       .",
+   run_start = const RUN_START,
+   )}
 
 }
 
