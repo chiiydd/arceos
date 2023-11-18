@@ -19,13 +19,13 @@
    
     println!("Load payload ...");
 
-    load_apps();
+    load_and_run_apps();
     // let code = unsafe { core::slice::from_raw_parts(apps_start, apps_size) };
     // println!("app size:{:?} content:{:?}",apps_size,code);
     // println!("Load payload ok!");
  }
 
- fn load_apps(){
+ fn load_and_run_apps(){
    let header_start=PLASH_START as *const u8;
    let apps_amount_byte=unsafe {
       core::slice::from_raw_parts(header_start, HEADER_LENGTH)  
