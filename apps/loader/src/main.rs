@@ -9,20 +9,20 @@
  #[cfg_attr(feature = "axstd", no_mangle)]
 
  fn main() {
-    let header_start=PLASH_START as *const u8;
-    let apps_start: *const u8 = (PLASH_START+HEADER_LENGTH) as *const u8;
-    // let apps_size = 32; // Dangerous!!! We need to get accurate size of apps.
-    let apps_size_bytes:&[u8]=unsafe {core::slice::from_raw_parts(header_start, HEADER_LENGTH)};
+    // let header_start=PLASH_START as *const u8;
+    // let apps_start: *const u8 = (PLASH_START+HEADER_LENGTH) as *const u8;
+    // // let apps_size = 32; // Dangerous!!! We need to get accurate size of apps.
+    // let apps_size_bytes:&[u8]=unsafe {core::slice::from_raw_parts(header_start, HEADER_LENGTH)};
 
 
-    let apps_size=apps_size_bytes[0] as usize;
+    // let apps_size=apps_size_bytes[0] as usize;
    
     println!("Load payload ...");
 
-    // load_apps();
-    let code = unsafe { core::slice::from_raw_parts(apps_start, apps_size) };
-    println!("app size:{:?} content:{:?}",apps_size,code);
-    println!("Load payload ok!");
+    load_apps();
+    // let code = unsafe { core::slice::from_raw_parts(apps_start, apps_size) };
+    // println!("app size:{:?} content:{:?}",apps_size,code);
+    // println!("Load payload ok!");
  }
 
  fn load_apps(){
