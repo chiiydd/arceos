@@ -61,7 +61,6 @@ static mut APP_PT_SV39: [[u64; 512];10] = [[0; 512];10];
 
 unsafe fn init_app_page_table(app_amount:usize) {
 
-   println!("init {} apps's page table",app_amount);
    for idx in 0..app_amount{
          // 0x8000_0000..0xc000_0000, VRWX_GAD, 1G block
    APP_PT_SV39[idx][2] = (0x80000 << 10) | 0xef;
@@ -75,7 +74,7 @@ unsafe fn init_app_page_table(app_amount:usize) {
    }
  
 }
-unsafe fn switch_to_physical_page() {
+unsafe fn switch_to_kernel_page() {
 
    
    // Configure satp to use Sv39 mode with physical page table address
@@ -84,7 +83,7 @@ unsafe fn switch_to_physical_page() {
    // Flush the TLB to ensure the new translation takes effect
    riscv::asm::sfence_vma_all();
 }
-unsafe fn switch_app_aspace(app_index:usize) {
+unsafe fn switch_app_space(app_index:usize) {
    
    println!("switch to app {}'s page table.",app_index);
    let page_table_root = APP_PT_SV39[app_index].as_ptr() as usize -
@@ -107,7 +106,6 @@ unsafe fn switch_app_aspace(app_index:usize) {
 
    unsafe{init_app_page_table(apps_amount);}
    for idx in 0..apps_amount{
-      unsafe{switch_app_aspace(idx);}
 
       let apps_size_start: *const u8 = (PLASH_START+HEADER_LENGTH+idx) as *const u8;
       let apps_size_byte=unsafe {
@@ -117,8 +115,12 @@ unsafe fn switch_app_aspace(app_index:usize) {
       let load_code =unsafe {
           core::slice::from_raw_parts(apps_start as *const u8,app_size)
       };
-      // apps_start+=app_size;
+      apps_start+=app_size;
       // println!("app {} size:{:?} content:{:?}",idx,app_size,load_code);
+
+
+      // switch to app's pagetable
+      unsafe{switch_app_space(idx);}
 
       let run_code=unsafe {
           core::slice::from_raw_parts_mut(apps_run_start as *mut u8, app_size)
@@ -126,9 +128,8 @@ unsafe fn switch_app_aspace(app_index:usize) {
       run_code.copy_from_slice(load_code);
       // println!("run code {:?}; address [{:?}]", run_code, run_code.as_ptr());
 
-      println!("Execute app ...");
+      println!("Execute app {},addrress {:?}",idx,run_code.as_ptr());
 
-      println!("0x{:X}",satp::read().bits());
       // execute app
       unsafe { core::arch::asm!("
             la a0, {abi_table}
@@ -140,7 +141,8 @@ unsafe fn switch_app_aspace(app_index:usize) {
         )};
       // apps_run_start+=app_size;
 
-      unsafe{switch_to_physical_page();}
+      // switch back to the kernel's pagetable
+      unsafe{switch_to_kernel_page();}
       
 
    }
